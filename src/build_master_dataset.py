@@ -1,22 +1,140 @@
 import pandas as pd
 from pathlib import Path
+import re
 
 # =====================================================
-# CONFIG
+# PATHS
 # =====================================================
 
 RAW_PATH = Path("data/raw")
 OUTPUT_PATH = Path("data/processed")
 
-FILES = {
-    "general": RAW_PATH / "Team Stats Arenas Club.xlsx",
-    "ofensiva": RAW_PATH / "Team Stats Arenas Club Fase Ofensiva.xlsx",
-    "defensiva": RAW_PATH / "Team Stats Arenas Club Fase Defensiva.xlsx",
-    "organizacion": RAW_PATH / "Team Stats Arenas Club Organización.xlsx",
-    "indices": RAW_PATH / "Team Stats Arenas Club Índices.xlsx",
-}
+import re
 
-KEYS = ["Fecha", "Equipo"]
+# =====================================================
+# MATCH CONTEXT
+# =====================================================
+
+def parse_match(row):
+
+    match = str(row["Partido"])
+    team = row["Equipo"]
+
+    try:
+
+        match_clean = match.split("(")[0].strip()
+
+        teams_part = re.split(
+            r"\d+:\d+",
+            match_clean
+        )[0].strip()
+
+        score = re.search(
+            r"(\d+):(\d+)",
+            match_clean
+        )
+
+        local_team = (
+            teams_part.split(" - ")[0]
+            .strip()
+        )
+
+        away_team = (
+            teams_part.split(" - ")[1]
+            .strip()
+        )
+
+        local_goals = int(
+            score.group(1)
+        )
+
+        away_goals = int(
+            score.group(2)
+        )
+
+    except:
+
+        return pd.Series(
+            [
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None
+            ]
+        )
+
+    # ==============================
+    # LOCAL / VISITANTE
+    # ==============================
+
+    if team == local_team:
+
+        rival = away_team
+        venue = "Local"
+
+        goals_for = local_goals
+        goals_against = away_goals
+
+    elif team == away_team:
+
+        rival = local_team
+        venue = "Visitante"
+
+        goals_for = away_goals
+        goals_against = local_goals
+
+    else:
+
+        rival = None
+        venue = None
+
+        goals_for = None
+        goals_against = None
+
+    # ==============================
+    # RESULTADO
+    # ==============================
+
+    if goals_for is None:
+
+        result = None
+        points = None
+
+    elif goals_for > goals_against:
+
+        result = "Victoria"
+        points = 3
+
+    elif goals_for == goals_against:
+
+        result = "Empate"
+        points = 1
+
+    else:
+
+        result = "Derrota"
+        points = 0
+
+    goal_diff = (
+        goals_for - goals_against
+        if goals_for is not None
+        else None
+    )
+
+    return pd.Series(
+        [
+            rival,
+            venue,
+            result,
+            points,
+            goal_diff,
+            goals_for,
+            goals_against
+        ]
+    )
 
 # =====================================================
 # CLEAN FUNCTION
@@ -26,7 +144,6 @@ def clean_team_file(file_path):
 
     df = pd.read_excel(file_path)
 
-    # rellenar información de partido
     cols_to_fill = [
         "Fecha",
         "Partido",
@@ -41,18 +158,15 @@ def clean_team_file(file_path):
 
     df[existing_cols] = df[existing_cols].ffill()
 
-    # convertir fecha
     df["Fecha"] = pd.to_datetime(
         df["Fecha"],
         errors="coerce"
     )
 
-    # eliminar filas resumen
     df = df[
         df["Fecha"].notna()
     ].copy()
 
-    # reset index
     df.reset_index(
         drop=True,
         inplace=True
@@ -61,143 +175,334 @@ def clean_team_file(file_path):
     return df
 
 # =====================================================
-# LOAD & CLEAN
+# DETECT TEAMS
 # =====================================================
 
-general = clean_team_file(FILES["general"])
-ofensiva = clean_team_file(FILES["ofensiva"])
-defensiva = clean_team_file(FILES["defensiva"])
-organizacion = clean_team_file(FILES["organizacion"])
-indices = clean_team_file(FILES["indices"])
+files = list(
+    RAW_PATH.glob("*.xlsx")
+)
+
+teams = set()
+
+for file in files:
+
+    name = file.stem
+
+    name = name.replace(
+        "Team Stats ",
+        ""
+    )
+
+    name = re.sub(
+        r" Fase Defensiva$",
+        "",
+        name
+    )
+
+    name = re.sub(
+        r" Fase Ofensiva$",
+        "",
+        name
+    )
+
+    name = re.sub(
+        r" Organización$",
+        "",
+        name
+    )
+
+    name = re.sub(
+        r" Índices$",
+        "",
+        name
+    )
+
+    teams.add(name)
+
+teams = sorted(
+    list(teams)
+)
+
+print("\nEquipos encontrados:")
+print(len(teams))
+
+for t in teams:
+    print("-", t)
 
 # =====================================================
-# REMOVE DUPLICATED COLUMNS
+# BUILD MASTER
 # =====================================================
 
-base_cols = [
-    "Fecha",
-    "Equipo",
-    "Partido",
-    "Competición",
-    "Duración",
-    "Seleccionar esquema"
+all_teams = []
+
+for team in teams:
+
+    print(f"\nProcesando: {team}")
+
+    try:
+
+        general = clean_team_file(
+            RAW_PATH / f"Team Stats {team}.xlsx"
+        )
+
+        ofensiva = clean_team_file(
+            RAW_PATH / f"Team Stats {team} Fase Ofensiva.xlsx"
+        )
+
+        defensiva = clean_team_file(
+            RAW_PATH / f"Team Stats {team} Fase Defensiva.xlsx"
+        )
+
+        organizacion = clean_team_file(
+            RAW_PATH / f"Team Stats {team} Organización.xlsx"
+        )
+
+        indices = clean_team_file(
+            RAW_PATH / f"Team Stats {team} Índices.xlsx"
+        )
+
+        base_cols = [
+            "Fecha",
+            "Partido",
+            "Competición",
+            "Duración",
+            "Equipo",
+            "Seleccionar esquema"
+        ]
+
+        ofensiva = ofensiva.drop(
+            columns=[
+                c for c in base_cols
+                if c in ofensiva.columns
+            ],
+            errors="ignore"
+        )
+
+        defensiva = defensiva.drop(
+            columns=[
+                c for c in base_cols
+                if c in defensiva.columns
+            ],
+            errors="ignore"
+        )
+
+        organizacion = organizacion.drop(
+            columns=[
+                c for c in base_cols
+                if c in organizacion.columns
+            ],
+            errors="ignore"
+        )
+
+        indices = indices.drop(
+            columns=[
+                c for c in base_cols
+                if c in indices.columns
+            ],
+            errors="ignore"
+        )
+
+        team_df = general.copy()
+
+        team_df = team_df.merge(
+            ofensiva,
+            left_index=True,
+            right_index=True,
+            how="left"
+        )
+
+        team_df = team_df.merge(
+            defensiva,
+            left_index=True,
+            right_index=True,
+            how="left"
+        )
+
+        team_df = team_df.merge(
+            organizacion,
+            left_index=True,
+            right_index=True,
+            how="left"
+        )
+
+        team_df = team_df.merge(
+            indices,
+            left_index=True,
+            right_index=True,
+            how="left"
+        )
+
+        # ==========================================
+        # REMOVE DUPLICATE COLUMNS
+        # ==========================================
+
+        duplicate_map = {
+            "xG_x": "xG",
+            "Tiros totales_x": "Tiros totales",
+            "Tiros a portería_x": "Tiros a portería",
+            "% tiros portería_x": "% tiros portería",
+            "Pases logrados_x": "Pases logrados"
+        }
+
+        team_df = team_df.rename(
+            columns=duplicate_map
+        )
+
+        cols_to_drop = [
+            "xG_y",
+            "Tiros totales_y",
+            "Tiros a portería_y",
+            "% tiros portería_y",
+            "Pases logrados_y"
+        ]
+
+        team_df = team_df.drop(
+            columns=cols_to_drop,
+            errors="ignore"
+        )
+
+        all_teams.append(
+            team_df
+        )
+
+        print(
+            f"OK -> {len(team_df)} filas"
+        )
+
+    except Exception as e:
+
+        print(
+            f"ERROR en {team}"
+        )
+
+        print(e)
+
+# =====================================================
+# CONCAT ALL TEAMS
+# =====================================================
+
+master = pd.concat(
+    all_teams,
+    ignore_index=True
+)
+
+# =====================================================
+# SORT
+# =====================================================
+
+master = master.sort_values(
+    ["Fecha", "Equipo"]
+)
+
+master.reset_index(
+    drop=True,
+    inplace=True
+)
+
+# =====================================================
+# FILTER GROUP 1
+# =====================================================
+
+GROUP_1_TEAMS = [
+    "Arenas Club",
+    "Arenteiro",
+    "Athletic Bilbao",
+    "Barakaldo",
+    "Cacereño",
+    "Celta Fortuna",
+    "Guadalajara",
+    "Lugo",
+    "Mérida AD",
+    "Osasuna Promesas",
+    "Ourense CF",
+    "Ponferradina",
+    "Pontevedra",
+    "Racing Ferrol",
+    "Real Avilés",
+    "Real Madrid Castilla",
+    "Talavera CF",
+    "Tenerife",
+    "Unionistas de Salamanca",
+    "Zamora"
 ]
 
-ofensiva = ofensiva.drop(
-    columns=[
-        c for c in base_cols
-        if c in ofensiva.columns
-    ],
-    errors="ignore"
-)
-
-defensiva = defensiva.drop(
-    columns=[
-        c for c in base_cols
-        if c in defensiva.columns
-    ],
-    errors="ignore"
-)
-
-organizacion = organizacion.drop(
-    columns=[
-        c for c in base_cols
-        if c in organizacion.columns
-    ],
-    errors="ignore"
-)
-
-indices = indices.drop(
-    columns=[
-        c for c in base_cols
-        if c in indices.columns
-    ],
-    errors="ignore"
-)
+master = master[
+    master["Equipo"].isin(GROUP_1_TEAMS)
+].copy()
 
 # =====================================================
-# MERGE
+# FILTER REGULAR LEAGUE
 # =====================================================
 
-master = general.merge(
-    ofensiva,
-    left_index=True,
-    right_index=True,
-    how="left"
+print("\nCompeticiones encontradas:")
+print(
+    master["Competición"]
+    .value_counts(dropna=False)
 )
 
-master = master.merge(
-    defensiva,
-    left_index=True,
-    right_index=True,
-    how="left"
-)
+master = master[
+    master["Competición"]
+    .astype(str)
+    .str.contains(
+        "Primera Division RFEF",
+        case=False,
+        na=False
+    )
+].copy()
 
-master = master.merge(
-    organizacion,
-    left_index=True,
-    right_index=True,
-    how="left"
-)
-
-master = master.merge(
-    indices,
-    left_index=True,
-    right_index=True,
-    how="left"
-)
-
-# =====================================================
-# QUALITY CHECKS
-# =====================================================
-
-print("\nMASTER DATASET")
-print("=" * 50)
-
-print("Shape:")
+print("\nTras filtrar Primera RFEF:")
 print(master.shape)
 
-print("\nDuplicados Fecha+Equipo:")
-print(
-    master.duplicated(
-        subset=["Fecha", "Equipo"]
-    ).sum()
-)
 
-print("\nNulos:")
-print(
-    master.isna()
-          .sum()
-          .sort_values(
-              ascending=False
-          )
-          .head(20)
+master[
+    [
+        "Rival",
+        "Condicion",
+        "Resultado",
+        "Puntos",
+        "Diferencia_Goles",
+        "GF",
+        "GC"
+    ]
+] = master.apply(
+    parse_match,
+    axis=1
 )
 
 # =====================================================
 # REMOVE DUPLICATES
 # =====================================================
 
-master = master.drop(
-    columns=[
-        "xG_y",
-        "Tiros totales_y",
-        "Tiros a portería_y",
-        "% tiros portería_y",
-        "Pases logrados_y"
-    ],
-    errors="ignore"
+print("\nDuplicados antes:")
+
+print(
+    master[
+        ["Equipo", "Partido"]
+    ]
+    .duplicated()
+    .sum()
 )
 
-master = master.rename(
-    columns={
-        "xG_x": "xG",
-        "Tiros totales_x": "Tiros totales",
-        "Tiros a portería_x": "Tiros a portería",
-        "% tiros portería_x": "% tiros portería",
-        "Pases logrados_x": "Pases logrados"
-    }
+master = master.drop_duplicates(
+    subset=[
+        "Equipo",
+        "Partido"
+    ]
 )
+
+print("\nDuplicados después:")
+
+print(
+    master[
+        ["Equipo", "Partido"]
+    ]
+    .duplicated()
+    .sum()
+)
+
+print("\nShape final:")
+
+print(master.shape)
 
 # =====================================================
 # SAVE
@@ -213,10 +518,63 @@ master.to_csv(
     index=False
 )
 
+# =====================================================
+# REPORT
+# =====================================================
+
+print("\n")
+print("=" * 60)
+
+print("MASTER DATASET")
+
+print("=" * 60)
+
 print(
-    "\nArchivo guardado:"
+    f"Shape: {master.shape}"
 )
 
 print(
+    f"Equipos: {master['Equipo'].nunique()}"
+)
+
+print(
+    f"Partidos-equipo: {len(master)}"
+)
+
+print(
+    f"Columnas: {len(master.columns)}"
+)
+
+print("\nArchivo guardado:")
+
+print(
     OUTPUT_PATH / "master_team_stats.csv"
+)
+
+print(
+    master[
+        [
+            "Equipo",
+            "Rival",
+            "Condicion",
+            "Resultado",
+            "Puntos",
+            "GF",
+            "GC"
+        ]
+    ].head(20)
+)
+print(master.shape)
+
+print(
+    master[
+        ["Equipo", "Partido"]
+    ].duplicated().sum()
+)
+print(
+    master[
+        ["Equipo", "Partido"]
+    ]
+    .value_counts()
+    .head(20)
 )
