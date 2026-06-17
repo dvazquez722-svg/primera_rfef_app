@@ -13,12 +13,60 @@ df = pd.read_csv(
 # =====================================================
 
 metrics = [
+
+    # RESULTADO
+
     "xG",
-    "Posesión del balón, %",
-    "PPDA",
     "GF",
     "GC",
-    "Puntos"
+    "Puntos",
+
+    # POSESIÓN
+
+    "Posesión del balón, %",
+    "Promedio pases por posesión del balón",
+
+    # CONSTRUCCIÓN
+
+    "Longitud media pases",
+    "Lanzamiento largo %",
+    "Pases progresivos conseguidos",
+    "Pases en el último tercio logrados",
+    "% pases",
+
+    # ATAQUE
+
+    "Tiros totales",
+    "Tiros a portería",
+
+    "Ataques posicionales finalizados",
+    "Contraataques finalizados",
+
+    "Centros lanzados",
+    "% centros rematados",
+
+    # DEFENSA
+
+    "PPDA",
+
+    "Tiros en contra",
+    "Tiros en contra a portería",
+
+    "Balones recuperados último tercio",
+    "Balones recuperados inicio",
+    "Balones recuperados medio"
+
+    # DUELOS
+
+    "% duelos aéreos ganados",
+    "% duelos defensivos ganados"
+
+    # PÉRDIDAS
+
+    "Balones perdidos inicio",
+    "Balones perdidos medio",
+    "Balones perdidos último tercio",
+
 ]
 
 # =====================================================

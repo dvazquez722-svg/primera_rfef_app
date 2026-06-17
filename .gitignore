@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 .vscode/
 .ipynb_checkpoints/
+
+**/Partidos_Completos/

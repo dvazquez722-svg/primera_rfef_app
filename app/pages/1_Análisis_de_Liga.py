@@ -99,121 +99,80 @@ st.markdown(
 st.divider()
 
 # =====================================================
-# KPI DATA
+# HERO LIGA
 # =====================================================
+
+num_teams = len(df)
 
 best_xg = df.loc[df["xG"].idxmax()]
-best_possession = df.loc[df["Posesión del balón, %"].idxmax()]
-best_defense = df.loc[df["Goles recibidos"].idxmin()]
-best_ppda = df.loc[df["PPDA"].idxmin()]
+best_pos = df.loc[df["Posesión del balón, %"].idxmax()]
+best_def = df.loc[df["Goles recibidos"].idxmin()]
+best_press = df.loc[df["PPDA"].idxmin()]
 
-# =====================================================
-# KPIs
-# =====================================================
+st.markdown(
+f"""
+<div style="
+padding:35px;
+border-radius:20px;
+background:linear-gradient(
+135deg,
+#0f172a,
+#1e293b
+);
+margin-bottom:25px;
+">
 
-st.markdown("""
-<style>
+<h1 style="
+color:white;
+margin-bottom:10px;
+">
+🏆 Primera Federación
+</h1>
 
-.kpi-card{
-    background-color:white;
-    padding:22px;
-    border-radius:15px;
-    border:1px solid #E5E7EB;
-    box-shadow:0px 2px 8px rgba(0,0,0,0.08);
-    min-height:160px;
-}
+<div style="
+font-size:18px;
+color:#cbd5e1;
+margin-bottom:25px;
+">
+{num_teams} equipos analizados
+</div>
 
-.kpi-title{
-    font-size:14px;
-    color:#6B7280;
-    margin-bottom:10px;
-}
+<div style="
+color:white;
+font-size:16px;
+line-height:1.9;
+">
 
-.kpi-team{
-    font-size:30px;
-    font-weight:700;
-    color:#111827;
-    line-height:1.1;
-    margin-bottom:12px;
-}
+La competición presenta un perfil equilibrado,
+con diferencias significativas en producción ofensiva,
+presión y control del juego.
 
-.kpi-value{
-    font-size:22px;
-    font-weight:600;
-    color:#16A34A;
-}
+<br><br>
 
-</style>
-""", unsafe_allow_html=True)
+⚽ Mejor ataque:
+<b>{best_xg["Equipo"]}</b>
 
-best_xg = df.loc[df["xG"].idxmax()]
-best_possession = df.loc[df["Posesión del balón, %"].idxmax()]
-best_defense = df.loc[df["Goles recibidos"].idxmin()]
-best_ppda = df.loc[df["PPDA"].idxmin()]
+&nbsp;&nbsp;&nbsp;
 
-col1, col2, col3, col4 = st.columns(4)
+🧠 Más posesión:
+<b>{best_pos["Equipo"]}</b>
 
-with col1:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-title">
-            ⚽ Mejor ataque (xG)
-        </div>
-        <div class="kpi-team">
-            {best_xg["Equipo"]}
-        </div>
-        <div class="kpi-value">
-            xG {best_xg["xG"]:.2f}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+&nbsp;&nbsp;&nbsp;
 
-with col2:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-title">
-            🧠 Más posesión
-        </div>
-        <div class="kpi-team">
-            {best_possession["Equipo"]}
-        </div>
-        <div class="kpi-value">
-            {best_possession["Posesión del balón, %"]:.1f}%
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+🛡️ Mejor defensa:
+<b>{best_def["Equipo"]}</b>
 
-with col3:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-title">
-            🛡️ Mejor defensa
-        </div>
-        <div class="kpi-team">
-            {best_defense["Equipo"]}
-        </div>
-        <div class="kpi-value">
-            {best_defense["Goles recibidos"]:.2f}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+&nbsp;&nbsp;&nbsp;
 
-with col4:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <div class="kpi-title">
-            🔥 Más presión
-        </div>
-        <div class="kpi-team">
-            {best_ppda["Equipo"]}
-        </div>
-        <div class="kpi-value">
-            PPDA {best_ppda["PPDA"]:.2f}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+🔥 Más presión:
+<b>{best_press["Equipo"]}</b>
 
-st.divider()
+</div>
+
+</div>
+""",
+unsafe_allow_html=True
+)
 
 # =====================================================
 # FILTERS
@@ -264,7 +223,20 @@ left, right = st.columns([4, 1])
 
 with left:
 
-    st.subheader("Mapa de Equipos")
+    st.markdown("### 🌍 Mapa de Equipos")
+
+    st.markdown("""
+    <div style="
+    padding:20px;
+    background:linear-gradient(
+        135deg,
+        #071329,
+        #1e293b
+    );
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.08);
+    ">
+    """, unsafe_allow_html=True)
 
     df_plot = df.copy()
 
@@ -286,7 +258,7 @@ with left:
         size="Tamaño",
         color=y_var,
         color_continuous_scale="RdYlGn",
-        height=700
+        height=550
     )
 
     fig_scatter.update_traces(
@@ -299,29 +271,53 @@ with left:
             opacity=0.9
         )
     )
+
     fig_scatter.add_vline(
         x=df[x_var].mean(),
         line_dash="dash",
-        line_color="gray",
-        opacity=0.5
+        line_color="rgba(255,255,255,0.25)"
     )
 
     fig_scatter.add_hline(
         y=df[y_var].mean(),
         line_dash="dash",
-        line_color="gray",
-        opacity=0.5
+        line_color="rgba(255,255,255,0.25)"
     )
 
     fig_scatter.update_layout(
-        title=f"{y_var} vs {x_var}",
-        showlegend=False,
-        template="plotly_white",
+
+        paper_bgcolor="rgba(0,0,0,0)",
+
+        plot_bgcolor="#071329",
+
+        font=dict(
+            color="white",
+            size=13
+        ),
+
         margin=dict(
             l=20,
             r=20,
-            t=60,
+            t=20,
             b=20
+        ),
+
+        showlegend=False,
+
+        coloraxis_colorbar=dict(
+            title=y_var
+        ),
+
+        xaxis=dict(
+            title=x_var,
+            gridcolor="rgba(255,255,255,0.08)",
+            color="#cbd5e1"
+        ),
+
+        yaxis=dict(
+            title=y_var,
+            gridcolor="rgba(255,255,255,0.08)",
+            color="#cbd5e1"
         )
     )
 
@@ -329,6 +325,101 @@ with left:
         fig_scatter,
         use_container_width=True
     )
+
+# =====================================================
+# INSIGHTS COMPETICIÓN
+# =====================================================
+
+df["Conversion"] = (
+    df["Goles"] /
+    df["Tiros a portería"]
+)
+
+best_conversion = df.loc[
+    df["Conversion"].idxmax()
+]
+
+dominant_team = df.loc[
+    (
+        df["Posesión del balón, %"] +
+        df["Pases intentados"]
+    ).idxmax()
+]
+
+cross_team = df.loc[
+    df["% centros rematados"].idxmax()
+]
+
+press_team = df.loc[
+    df["PPDA"].idxmin()
+]
+
+high_xg = (
+    df["xG"] >
+    df["xG"].mean()
+).sum()
+
+
+st.markdown(
+    f"""
+<div style="
+padding:25px;
+margin-top:15px;
+background:linear-gradient(
+135deg,
+#041026,
+#071329
+);
+border-radius:18px;
+">
+
+<h3 style="
+color:white;
+margin-top:0;
+margin-bottom:20px;
+">
+📌 Insights de la Competición
+</h3>
+
+<div style="
+color:white;
+font-size:15px;
+line-height:2;
+">
+
+🎯 <b>{best_conversion['Equipo']}</b>
+presenta la mayor eficiencia ofensiva de la competición,
+convirtiendo una proporción superior de sus tiros a portería en gol.
+
+<br><br>
+
+🧠 <b>{dominant_team['Equipo']}</b>
+destaca por su capacidad para controlar los partidos mediante
+posesión y volumen de circulación.
+
+<br><br>
+
+📦 <b>{cross_team['Equipo']}</b>
+es el equipo que mejor aprovecha los centros laterales,
+registrando el mayor porcentaje de centros rematados.
+
+<br><br>
+
+🔥 <b>{press_team['Equipo']}</b>
+presenta el modelo defensivo más agresivo de la competición,
+permitiendo menos pases rivales antes de recuperar.
+
+<br><br>
+
+📈 <b>{high_xg} equipos</b>
+superan actualmente la media de la categoría en generación de xG.
+
+</div>
+
+</div>
+""",
+    unsafe_allow_html=True
+)
 
     # =====================================================
 # RANKING VISUAL
@@ -355,24 +446,50 @@ with right:
         y="Equipo",
         orientation="h",
         color=ranking_metric,
-        color_continuous_scale="Blues"
+        color_continuous_scale=[
+    "#38bdf8",
+    "#60a5fa",
+    "#93c5fd",
+    "#cbd5e1"
+]
     )
 
     fig_rank.update_layout(
-        height=700,
-        showlegend=False,
-        yaxis=dict(
-            autorange="reversed"
-        ),
-        template="plotly_white",
-        margin=dict(
-            l=20,
-            r=20,
-            t=20,
-            b=20
-        ),
-        coloraxis_showscale=False
-    )
+
+    height=550,
+
+    showlegend=False,
+
+    paper_bgcolor="rgba(0,0,0,0)",
+
+    plot_bgcolor="#071329",
+
+    font=dict(
+        color="white",
+        size=13
+    ),
+
+    yaxis=dict(
+        autorange="reversed",
+        color="#cbd5e1",
+        gridcolor="rgba(255,255,255,0.08)"
+    ),
+
+    xaxis=dict(
+        color="#cbd5e1",
+        gridcolor="rgba(255,255,255,0.08)"
+    ),
+
+    margin=dict(
+        l=20,
+        r=20,
+        t=20,
+        b=20
+    ),
+
+    coloraxis_showscale=False
+)
+    
 
     st.plotly_chart(
         fig_rank,
@@ -382,100 +499,48 @@ st.markdown("---")
 
 team_data = df[df["Equipo"] == selected_team].iloc[0]
 
-st.subheader(f"📋 {selected_team}")
+### RANKING ###
 
-c1, c2, c3, c4 = st.columns(4)
 
-c1.metric(
-    "xG",
-    f"{team_data['xG']:.2f}"
-)
-
-c2.metric(
-    "Posesión",
-    f"{team_data['Posesión del balón, %']:.1f}%"
-)
-
-c3.metric(
-    "PPDA",
-    f"{team_data['PPDA']:.2f}"
-)
-
-c4.metric(
-    "Goles recibidos",
-    f"{team_data['Goles recibidos']:.2f}"
-)
-
-st.divider()
-
-    # =====================================================
-# TOP / BOTTOM
-# =====================================================
-
-st.subheader("Top y Bottom")
+st.subheader("📊 Ranking de Equipos")
 
 metric_tb = st.selectbox(
-    "Selecciona métrica",
-    numeric_cols,
-    key="top_bottom"
+    "Métrica",
+    numeric_cols
 )
 
 top5 = (
-    df[
-        ["Equipo", metric_tb]
-    ]
-    .sort_values(
-        metric_tb,
-        ascending=False
-    )
+    df[["Equipo", metric_tb]]
+    .sort_values(metric_tb, ascending=False)
     .head(5)
 )
-
-top5["Grupo"] = "Top 5"
 
 bottom5 = (
-    df[
-        ["Equipo", metric_tb]
-    ]
-    .sort_values(
-        metric_tb,
-        ascending=True
-    )
+    df[["Equipo", metric_tb]]
+    .sort_values(metric_tb)
     .head(5)
 )
 
-bottom5["Grupo"] = "Bottom 5"
+col1, col2 = st.columns(2)
 
-tb = pd.concat(
-    [top5, bottom5]
-)
+with col1:
 
-fig_tb = px.bar(
-    tb,
-    x=metric_tb,
-    y="Equipo",
-    color="Grupo",
-    orientation="h",
-    height=500,
-    barmode="group"
-)
+    st.markdown("### 🟢 Top 5")
 
-fig_tb.update_layout(
-    template="plotly_white",
-    margin=dict(
-        l=20,
-        r=20,
-        t=20,
-        b=20
-    ),
-    legend_title="",
-    yaxis_title="",
-    xaxis_title=metric_tb
-)
+    for _, row in top5.iterrows():
 
-st.plotly_chart(
-    fig_tb,
-    use_container_width=True
-)
+        st.success(
+            f"{row['Equipo']} · {row[metric_tb]:.2f}"
+        )
+
+with col2:
+
+    st.markdown("### 🔴 Bottom 5")
+
+    for _, row in bottom5.iterrows():
+
+        st.error(
+            f"{row['Equipo']} · {row[metric_tb]:.2f}"
+        )
 
 st.divider()
