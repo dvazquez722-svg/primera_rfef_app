@@ -1,0 +1,49 @@
+{
+    "team": "Arenas Club",
+    "created": "2026-06-25T19:52:33.822065",
+    "updated": "2026-07-01T01:37:42.156470",
+    "notes": [
+        {
+            "id": "327c7e57-e3b8-45c1-8b70-3ed661b4e35a",
+            "module": "League Analysis",
+            "section": "Mapa de Equipos",
+            "type": "Debilidad",
+            "text": "Les cuesta progresar si no es a través del juego directo",
+            "date": "2026-06-25T19:52:33.845682"
+        },
+        {
+            "id": "8697d19e-9749-4859-8400-b56f3fd4f85c",
+            "module": "League Analysis",
+            "section": "Mapa de Equipos",
+            "type": "Fortaleza",
+            "text": "Defienden el área con mucha gente y muy bien ",
+            "date": "2026-06-25T19:53:48.934992"
+        },
+        {
+            "id": "75c1aa15-6e1e-46fe-915a-2be1a9eb9fb5",
+            "module": "League",
+            "section": "Posicionamiento Competitivo",
+            "chart": "Scatter Competitivo",
+            "variables": [
+                "xG",
+                "Tiros a portería"
+            ],
+            "type": "Idea táctica",
+            "text": "Es un equipo que genera pocas ocasiones claras de gol, y le cuesta transformarlas",
+            "date": "2026-06-30T21:13:02.895022"
+        },
+        {
+            "id": "ed75d6b1-6062-45cd-9026-049e1a288d61",
+            "module": "Informe Automático",
+            "section": "Producción",
+            "chart": "Producción → Rendimiento",
+            "variables": [
+                "Goles",
+                "xG"
+            ],
+            "type": "Observación",
+            "text": "están muy lejos de los valores de la liga",
+            "date": "2026-07-01T01:37:42.156445"
+        }
+    ]
+}

@@ -1,0 +1,17 @@
+[
+    {
+        "video": "E:\\primera_rfef_app\\videos\\Ponferradina\\Bloque_Medio\\Autopista Aitor.mp4",
+        "category": "Bloque_Medio",
+        "target": "Staff"
+    },
+    {
+        "video": "E:\\primera_rfef_app\\videos\\Ponferradina\\Bloque_Medio\\Pasividad lado izquierdo.mp4",
+        "category": "Bloque_Medio",
+        "target": "Staff"
+    },
+    {
+        "video": "E:\\primera_rfef_app\\videos\\Ponferradina\\Finalizacion\\Screen_Recording_20260220_012337_Chrome.mp4",
+        "category": "Finalizacion",
+        "target": "Staff"
+    }
+]

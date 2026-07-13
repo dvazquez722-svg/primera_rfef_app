@@ -1,168 +1,231 @@
 import pandas as pd
 
-# =====================================================
-# LOAD
-# =====================================================
-
-df = pd.read_csv(
-    "data/processed/master_team_stats.csv"
-)
 
 # =====================================================
-# METRICS
+# BUILD TEAM CONTEXT
 # =====================================================
 
-metrics = [
+def build_team_context(df):
 
-    # RESULTADO
+    """
+    Genera el contexto estadístico por equipo
+    (victorias, empates, derrotas, local y visitante).
 
-    "xG",
-    "GF",
-    "GC",
-    "Puntos",
+    Parámetros
+    ----------
+    df : pandas.DataFrame
+        DataFrame con un partido por fila.
 
-    # POSESIÓN
+    Devuelve
+    --------
+    pandas.DataFrame
+        Una fila por equipo con todas las métricas de contexto.
+    """
 
-    "Posesión del balón, %",
-    "Promedio pases por posesión del balón",
+    # =====================================================
+    # METRICS
+    # =====================================================
 
-    # CONSTRUCCIÓN
+    metrics = [
 
-    "Longitud media pases",
-    "Lanzamiento largo %",
-    "Pases progresivos conseguidos",
-    "Pases en el último tercio logrados",
-    "% pases",
+        # RESULTADO
 
-    # ATAQUE
+        "xG",
+        "GF",
+        "GC",
+        "Puntos",
 
-    "Tiros totales",
-    "Tiros a portería",
+        # POSESIÓN
 
-    "Ataques posicionales finalizados",
-    "Contraataques finalizados",
+        "Posesión del balón, %",
+        "Promedio pases por posesión del balón",
 
-    "Centros lanzados",
-    "% centros rematados",
+        # CONSTRUCCIÓN
 
-    # DEFENSA
+        "Longitud media pases",
+        "Lanzamiento largo %",
+        "Pases progresivos conseguidos",
+        "Pases en el último tercio logrados",
+        "% pases",
 
-    "PPDA",
+        # ATAQUE
 
-    "Tiros en contra",
-    "Tiros en contra a portería",
+        "Tiros totales",
+        "Tiros a portería",
 
-    "Balones recuperados último tercio",
-    "Balones recuperados inicio",
-    "Balones recuperados medio"
+        "Ataques posicionales finalizados",
+        "Contraataques finalizados",
 
-    # DUELOS
+        "Centros lanzados",
+        "% centros rematados",
 
-    "% duelos aéreos ganados",
-    "% duelos defensivos ganados"
+        # DEFENSA
 
-    # PÉRDIDAS
+        "PPDA",
 
-    "Balones perdidos inicio",
-    "Balones perdidos medio",
-    "Balones perdidos último tercio",
+        "Tiros en contra",
+        "Tiros en contra a portería",
 
-]
+        "Balones recuperados último tercio",
+        "Balones recuperados inicio",
+        "Balones recuperados medio",
+
+        # DUELOS
+
+        "% duelos aéreos ganados",
+        "% duelos defensivos ganados",
+
+        # PÉRDIDAS
+
+        "Balones perdidos inicio",
+        "Balones perdidos medio",
+        "Balones perdidos último tercio"
+
+    ]
+
+    # Solo columnas existentes
+
+    metrics = [
+
+        c
+
+        for c in metrics
+
+        if c in df.columns
+
+    ]
+
+    # =====================================================
+    # RESULTADOS
+    # =====================================================
+
+    victories = (
+
+        df[df["Resultado"] == "Victoria"]
+
+        .groupby("Equipo")[metrics]
+
+        .mean()
+
+        .add_suffix("_Victoria")
+
+    )
+
+    draws = (
+
+        df[df["Resultado"] == "Empate"]
+
+        .groupby("Equipo")[metrics]
+
+        .mean()
+
+        .add_suffix("_Empate")
+
+    )
+
+    losses = (
+
+        df[df["Resultado"] == "Derrota"]
+
+        .groupby("Equipo")[metrics]
+
+        .mean()
+
+        .add_suffix("_Derrota")
+
+    )
+
+    # =====================================================
+    # LOCAL / VISITANTE
+    # =====================================================
+
+    home = (
+
+        df[df["Condicion"] == "Local"]
+
+        .groupby("Equipo")[metrics]
+
+        .mean()
+
+        .add_suffix("_Local")
+
+    )
+
+    away = (
+
+        df[df["Condicion"] == "Visitante"]
+
+        .groupby("Equipo")[metrics]
+
+        .mean()
+
+        .add_suffix("_Visitante")
+
+    )
+
+    # =====================================================
+    # MERGE
+    # =====================================================
+
+    context = (
+
+        victories
+
+        .join(draws)
+
+        .join(losses)
+
+        .join(home)
+
+        .join(away)
+
+        .reset_index()
+
+    )
+
+    context = context.round(2)
+
+    return context
+
 
 # =====================================================
-# RESULT CONTEXT
+# SCRIPT
 # =====================================================
 
-victories = (
-    df[df["Resultado"] == "Victoria"]
-    .groupby("Equipo")[metrics]
-    .mean()
-    .add_suffix("_Victoria")
-)
+if __name__ == "__main__":
 
-draws = (
-    df[df["Resultado"] == "Empate"]
-    .groupby("Equipo")[metrics]
-    .mean()
-    .add_suffix("_Empate")
-)
+    df = pd.read_csv(
 
-losses = (
-    df[df["Resultado"] == "Derrota"]
-    .groupby("Equipo")[metrics]
-    .mean()
-    .add_suffix("_Derrota")
-)
+        "data/processed/master_team_stats.csv"
 
-# =====================================================
-# HOME / AWAY CONTEXT
-# =====================================================
+    )
 
-home = (
-    df[df["Condicion"] == "Local"]
-    .groupby("Equipo")[metrics]
-    .mean()
-    .add_suffix("_Local")
-)
+    context = build_team_context(df)
 
-away = (
-    df[df["Condicion"] == "Visitante"]
-    .groupby("Equipo")[metrics]
-    .mean()
-    .add_suffix("_Visitante")
-)
+    context.to_csv(
 
-# =====================================================
-# MERGE
-# =====================================================
+        "data/processed/team_context_summary.csv",
 
-context = (
-    victories
-    .join(draws)
-    .join(losses)
-    .join(home)
-    .join(away)
-    .reset_index()
-)
+        index=False
 
-context = context.round(2)
+    )
 
-# =====================================================
-# SAVE
-# =====================================================
+    print("\nShape:")
 
-context.to_csv(
-    "data/processed/team_context_summary.csv",
-    index=False
-)
+    print(context.shape)
 
-# =====================================================
-# CHECKS
-# =====================================================
+    print("\nEquipos:")
 
-print("\nShape:")
-print(context.shape)
+    print(context["Equipo"].nunique())
 
-print("\nEquipos:")
-print(
-    context["Equipo"]
-    .nunique()
-)
+    print("\nColumnas:")
 
-print("\nColumnas:")
-print(
-    len(context.columns)
-)
+    print(len(context.columns))
 
-print("\nPreview:")
-print(
-    context.head()
-)
+    print("\nPreview:")
 
-context = pd.read_csv(
-    "data/processed/team_context_summary.csv"
-)
+    print(context.head())
 
-print(
-    context.columns.tolist()
-)
+    print("\nColumnas disponibles:")
+
+    print(context.columns.tolist())
