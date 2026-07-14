@@ -7,3 +7,5 @@ scikit-learn
 kaleido
 supabase
 python-docx
+moviepy==2.2.1
+imageio-ffmpeg
